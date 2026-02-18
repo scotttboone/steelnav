@@ -46,6 +46,12 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+        button.control-btn {
+            margin: 2px;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+        }
         label { font-size: 14px; color: #555; font-weight: 500; }
     </style>
 </head>
@@ -55,6 +61,7 @@
     
     <div class="controls">
         <div class="control-group">
+            <label>Tuning: <select id="tuning-select"></select></label>
             <label>Root: <select id="root-select"></select></label>
             <label>Mode: <select id="mode-select"></select></label>
         </div>
@@ -66,11 +73,8 @@
             <label><input type="checkbox" id="show-markers" checked> Markers</label>
             <label><input type="checkbox" id="show-freq"> Freq</label>
         </div>
-        <div class="control-group">
-            <label style="font-weight:bold; margin-right:5px;">Pedals:</label>
-            <label><input type="checkbox" id="pedal-a"> A</label>
-            <label><input type="checkbox" id="pedal-b"> B</label>
-            <label><input type="checkbox" id="pedal-c"> C</label>
+        <div class="control-group" id="dynamic-controls">
+            <!-- Pedals and Levers will be injected here by JS -->
         </div>
     </div>
 
@@ -84,26 +88,72 @@
         // --- Music Theory Constants ---
         const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const MARKERS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
-        
-        // Standard E9 Pedal Steel Tuning (High to Low)
-        const TUNING = [
-            { note: "F#", octave: 4 }, // 1
-            { note: "D#", octave: 4 }, // 2
-            { note: "G#", octave: 4 }, // 3
-            { note: "E",  octave: 4 }, // 4
-            { note: "B",  octave: 3 }, // 5
-            { note: "G#", octave: 3 }, // 6
-            { note: "F#", octave: 3 }, // 7
-            { note: "E",  octave: 3 }, // 8
-            { note: "D",  octave: 3 }, // 9
-            { note: "B",  octave: 2 }  // 10
-        ];
 
-        // Standard Emmons E9 Pedal Changes (String 1 is top/highest)
-        const PEDAL_CHANGES = {
-            "pedal-a": [{string: 5, shift: 2}, {string: 10, shift: 2}], // B -> C#
-            "pedal-b": [{string: 3, shift: 1}, {string: 6, shift: 1}],  // G# -> A
-            "pedal-c": [{string: 4, shift: 2}, {string: 5, shift: 2}]   // E -> F#, B -> C#
+        // --- Ported Copedent Library (From Python) ---
+        const COPEDENT_LIBRARY = {
+            "E9 Custom": {
+                num_strings: 10,
+                tuning: {1: 66, 2: 63, 3: 68, 4: 64, 5: 59, 6: 56, 7: 54, 8: 52, 9: 50, 10: 47},
+                pedals: [
+                    {id: "A", label: "A", changes: {"5": 2, "10": 2}},
+                    {id: "B", label: "B", changes: {"3": 1, "6": 1}},
+                    {id: "C", label: "C", changes: {"4": 2, "5": 2}},
+                    {id: "D", label: "D", changes: {"5": -1, "6": -2, "10": -1}}
+                ],
+                levers: [
+                    {id: "LL", label: "LL", group: "Left Knee", changes: {"4": 1, "8": 1}},
+                    {id: "LV", label: "LV", group: "Left Knee", changes: {"6": -1}},
+                    {id: "LR", label: "LR", group: "Left Knee", changes: {"4": -1, "8": -1}},
+                    {id: "RL", label: "RL", group: "Right Knee", changes: {"1": 1, "7": 1}},
+                    {id: "RR1", label: "RR1", group: "Right Knee", changes: {"2": -1, "9": -1}},
+                    {id: "RR2", label: "RR2", group: "Right Knee", changes: {"2": -2, "9": -1}}
+                ]
+            },
+            "E9 Emmons": {
+                num_strings: 10,
+                tuning: {1: 66, 2: 63, 3: 68, 4: 64, 5: 59, 6: 56, 7: 54, 8: 52, 9: 50, 10: 47},
+                pedals: [
+                    {id: "A", label: "A", changes: {"5": 2, "10": 2}},
+                    {id: "B", label: "B", changes: {"3": 1, "6": 1}},
+                    {id: "C", label: "C", changes: {"4": 2, "5": 2}}
+                ],
+                levers: [
+                    {id: "LKL", label: "LKL", group: "Left Knee", changes: {"4": 1, "8": 1}},
+                    {id: "LKR", label: "LKR", group: "Left Knee", changes: {"4": -1, "8": -1}},
+                    {id: "RKL", label: "RKL", group: "Right Knee", changes: {"1": 1, "7": 1}},
+                    {id: "RKR", label: "RKR", group: "Right Knee", changes: {"2": -1, "9": -1}}
+                ]
+            },
+            "C6 Standard": {
+                num_strings: 10,
+                tuning: {1: 67, 2: 64, 3: 60, 4: 57, 5: 55, 6: 52, 7: 48, 8: 45, 9: 41, 10: 36},
+                pedals: [
+                    {id: "P4", label: "P4", changes: {"4": 2, "8": 2}},
+                    {id: "P5", label: "P5", changes: {"1": 1, "5": 1, "9": 2, "10": 2}},
+                    {id: "P6", label: "P6", changes: {"2": -1, "6": -1}},
+                    {id: "P7", label: "P7", changes: {"3": 2, "7": 2}},
+                    {id: "P8", label: "P8", changes: {"4": -2, "8": -2}}
+                ],
+                levers: [
+                    {id: "LKL", label: "LKL", group: "Left Knee", changes: {"1": -1, "5": -1}},
+                    {id: "LKR", label: "LKR", group: "Left Knee", changes: {"2": 1, "6": 1}}
+                ]
+            },
+            "12-string Universal": {
+                num_strings: 12,
+                tuning: {1: 66, 2: 63, 3: 68, 4: 64, 5: 59, 6: 56, 7: 54, 8: 52, 9: 51, 10: 49, 11: 47, 12: 44},
+                pedals: [
+                    {id: "A", label: "A", changes: {"5": 2, "10": 2}},
+                    {id: "B", label: "B", changes: {"3": 1, "6": 1}},
+                    {id: "C", label: "C", changes: {"4": 2, "5": 2}},
+                    {id: "P5", label: "P5", changes: {"9": -1, "10": -1}},
+                    {id: "P6", label: "P6", changes: {"2": -1}}
+                ],
+                levers: [
+                    {id: "LKL", label: "LKL", group: "Left Knee", changes: {"4": 1, "8": 1}},
+                    {id: "LKR", label: "LKR", group: "Left Knee", changes: {"4": -1, "8": -1}}
+                ]
+            }
         };
 
         const SCALES = {
@@ -119,8 +169,12 @@
 
         // --- Initialization ---
         const rootSelect = document.getElementById('root-select');
+        const tuningSelect = document.getElementById('tuning-select');
         const modeSelect = document.getElementById('mode-select');
+        const controlsContainer = document.getElementById('dynamic-controls');
         
+        let activeModifiers = new Set(); // Stores IDs of active pedals/levers
+
         // Populate Dropdowns
         NOTES.forEach((note, index) => {
             const opt = document.createElement('option');
@@ -130,6 +184,13 @@
             rootSelect.appendChild(opt);
         });
 
+        Object.keys(COPEDENT_LIBRARY).forEach(key => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.text = key;
+            tuningSelect.appendChild(opt);
+        });
+
         Object.keys(SCALES).forEach(scale => {
             const opt = document.createElement('option');
             opt.value = scale;
@@ -137,8 +198,61 @@
             modeSelect.appendChild(opt);
         });
 
+        // --- UI Generation for Pedals/Levers ---
+        function renderControls() {
+            const tuningName = tuningSelect.value;
+            const copedent = COPEDENT_LIBRARY[tuningName];
+            controlsContainer.innerHTML = ''; // Clear existing
+            activeModifiers.clear(); // Reset active pedals on tuning change
+
+            const allControls = [...(copedent.pedals || []), ...(copedent.levers || [])];
+            
+            allControls.forEach(ctrl => {
+                const btn = document.createElement('button');
+                btn.className = 'control-btn';
+                btn.innerText = ctrl.label;
+                btn.dataset.id = ctrl.id;
+                
+                btn.onclick = () => {
+                    if (activeModifiers.has(ctrl.id)) {
+                        activeModifiers.delete(ctrl.id);
+                        btn.style.backgroundColor = '';
+                        btn.style.color = '';
+                    } else {
+                        activeModifiers.add(ctrl.id);
+                        btn.style.backgroundColor = '#4CAF50';
+                        btn.style.color = 'white';
+                    }
+                    update(); // Re-render fretboard
+                };
+                controlsContainer.appendChild(btn);
+            });
+        }
+
+        // --- Logic: Calculate Tuning ---
+        function calculateTuning(copedent) {
+            // Deep copy base tuning
+            const currentTuning = {...copedent.tuning};
+            const allControls = [...(copedent.pedals || []), ...(copedent.levers || [])];
+
+            allControls.forEach(ctrl => {
+                if (activeModifiers.has(ctrl.id)) {
+                    Object.entries(ctrl.changes).forEach(([stringIdx, shift]) => {
+                        if (currentTuning[stringIdx]) {
+                            currentTuning[stringIdx] += shift;
+                        }
+                    });
+                }
+            });
+            return currentTuning;
+        }
+
         // --- Data Generation ---
         function generateData() {
+            const tuningName = tuningSelect.value;
+            const copedent = COPEDENT_LIBRARY[tuningName];
+            const currentTuning = calculateTuning(copedent);
+
             const rootIndex = parseInt(rootSelect.value);
             const scaleName = modeSelect.value;
             const scaleIntervals = SCALES[scaleName];
@@ -148,30 +262,16 @@
             const showFreq = document.getElementById('show-freq').checked;
 
             const notes = [];
-            
-            // Determine active pedal shifts
-            const activeShifts = {}; // Key: stringIndex (0-9), Value: semitone shift
-            ['pedal-a', 'pedal-b', 'pedal-c'].forEach(pid => {
-                if (document.getElementById(pid).checked) {
-                    PEDAL_CHANGES[pid].forEach(change => {
-                        // Convert 1-based string index to 0-based
-                        const sIdx = change.string - 1;
-                        activeShifts[sIdx] = (activeShifts[sIdx] || 0) + change.shift;
-                    });
-                }
-            });
 
             // Generate notes for every string and fret
-            for (let s = 0; s < TUNING.length; s++) {
-                let openStringNote = TUNING[s].note;
-                let openStringOctave = TUNING[s].octave;
-                let openNoteIndex = NOTES.indexOf(openStringNote);
-
-                // Apply Pedal Shifts
-                const shift = activeShifts[s] || 0;
-                openNoteIndex = (openNoteIndex + shift); // Can go above 11, handled in loop
+            // Note: Copedent strings are 1-based keys in the object
+            for (let s = 1; s <= copedent.num_strings; s++) {
+                const openPitch = currentTuning[s]; // MIDI number
                 
                 for (let f = 0; f <= maxFret; f++) {
+                    const pitch = openPitch + f;
+                    const openNoteIndex = pitch % 12;
+                    
                     // Calculate current note index
                     const currentNoteIndex = (openNoteIndex + f) % 12;
                     
@@ -189,13 +289,12 @@
                         // Simple frequency calc (approximation for display)
                         // f = f0 * (2)^(n/12)
                         // This is just for visual label, not precise audio
-                        const semitonesFromC0 = (openStringOctave * 12) + NOTES.indexOf(openStringNote) + shift + f;
-                        const freqVal = 16.35 * Math.pow(2, semitonesFromC0 / 12);
+                        const freqVal = 440.0 * Math.pow(2, (pitch - 69) / 12.0);
                         
                         notes.push({
-                            id: `n-${s}-${f}`,
+                            id: `n-${s}-${f}-${pitch}`, // Unique ID
                             fret: f,
-                            string: s + 1, // 1-based index for renderer
+                            string: s, 
                             note: noteName,
                             cat: cat,
                             is_chord: true, // Treat all visible notes as "chord" for visibility in this tool
@@ -207,7 +306,7 @@
 
             return {
                 max_fret: maxFret,
-                num_strings: TUNING.length,
+                num_strings: copedent.num_strings,
                 show_markers: showMarkers,
                 highlight_frets: MARKERS,
                 night_mode: nightMode,
@@ -240,7 +339,11 @@
             el.addEventListener('input', update);
         });
 
+        // Special listener for tuning change to rebuild controls
+        tuningSelect.addEventListener('change', () => { renderControls(); update(); });
+
         // Initial Render
+        renderControls();
         update();
     </script>
 </body>
