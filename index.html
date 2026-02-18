@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SteelNav Fretboard Demo</title>
+    
+    <!-- Load D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 { color: #333; }
+        #fretboard-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Fretboard Visualization</h1>
+    <div id="fretboard-container"></div>
+
+    <!-- Load your existing JS file -->
+    <script src="assets/d3_fretboard.js"></script>
+
+    <!-- Initialize with Mock Data -->
+    <script>
+        const mockData = {
+            max_fret: 15,
+            num_strings: 10,
+            show_markers: true,
+            night_mode: false,
+            min_adjacency: 2,
+            fret_labels: [
+                {fret: 3, label: "3"}, 
+                {fret: 5, label: "5"}, 
+                {fret: 7, label: "7"}, 
+                {fret: 12, label: "12"}
+            ],
+            notes: [
+                // C Major Chord at Fret 3 (C, E, G)
+                {id: "n1", fret: 3, string: 5, note: "C", cat: 2, is_chord: true, freq: "261Hz"},
+                {id: "n2", fret: 3, string: 6, note: "G", cat: 1, is_chord: true, freq: "196Hz"},
+                {id: "n3", fret: 3, string: 4, note: "E", cat: 1, is_chord: true, freq: "329Hz"},
+                // Scale notes
+                {id: "n4", fret: 5, string: 4, note: "F#", cat: 0, is_chord: false, freq: "370Hz"},
+                {id: "n5", fret: 8, string: 5, note: "F", cat: 1, is_chord: false, freq: "349Hz"}
+            ]
+        };
+
+        if (window.dash_clientside && window.dash_clientside.clientside.render_fretboard) {
+            window.dash_clientside.clientside.render_fretboard(mockData);
+        }
+    </script>
+</body>
+</html>
