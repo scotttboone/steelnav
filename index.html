@@ -24,44 +24,195 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        select, input[type="number"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        label { font-size: 14px; color: #555; font-weight: 500; }
     </style>
 </head>
 <body>
 
     <h1>Fretboard Visualization</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>Root: <select id="root-select"></select></label>
+            <label>Mode: <select id="mode-select"></select></label>
+        </div>
+        <div class="control-group">
+            <label>Frets: <input type="number" id="max-fret" value="15" min="5" max="24" style="width: 50px;"></label>
+        </div>
+        <div class="control-group">
+            <label><input type="checkbox" id="night-mode"> Night Mode</label>
+            <label><input type="checkbox" id="show-markers" checked> Markers</label>
+            <label><input type="checkbox" id="show-freq"> Freq</label>
+        </div>
+    </div>
+
     <div id="fretboard-container"></div>
 
     <!-- Load your existing JS file -->
     <script src="assets/d3_fretboard.js"></script>
 
-    <!-- Initialize with Mock Data -->
+    <!-- Logic to Generate Data and Handle Interaction -->
     <script>
-        const mockData = {
-            max_fret: 15,
-            num_strings: 10,
-            show_markers: true,
-            night_mode: false,
-            min_adjacency: 2,
-            fret_labels: [
-                {fret: 3, label: "3"}, 
-                {fret: 5, label: "5"}, 
-                {fret: 7, label: "7"}, 
-                {fret: 12, label: "12"}
-            ],
-            notes: [
-                // C Major Chord at Fret 3 (C, E, G)
-                {id: "n1", fret: 3, string: 5, note: "C", cat: 2, is_chord: true, freq: "261Hz"},
-                {id: "n2", fret: 3, string: 6, note: "G", cat: 1, is_chord: true, freq: "196Hz"},
-                {id: "n3", fret: 3, string: 4, note: "E", cat: 1, is_chord: true, freq: "329Hz"},
-                // Scale notes
-                {id: "n4", fret: 5, string: 4, note: "F#", cat: 0, is_chord: false, freq: "370Hz"},
-                {id: "n5", fret: 8, string: 5, note: "F", cat: 1, is_chord: false, freq: "349Hz"}
-            ]
+        // --- Music Theory Constants ---
+        const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const MARKERS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+        
+        // Standard E9 Pedal Steel Tuning (High to Low)
+        const TUNING = [
+            { note: "F#", octave: 4 }, // 1
+            { note: "D#", octave: 4 }, // 2
+            { note: "G#", octave: 4 }, // 3
+            { note: "E",  octave: 4 }, // 4
+            { note: "B",  octave: 3 }, // 5
+            { note: "G#", octave: 3 }, // 6
+            { note: "F#", octave: 3 }, // 7
+            { note: "E",  octave: 3 }, // 8
+            { note: "D",  octave: 3 }, // 9
+            { note: "B",  octave: 2 }  // 10
+        ];
+
+        const SCALES = {
+            "Major Scale": [0, 2, 4, 5, 7, 9, 11],
+            "Minor Scale": [0, 2, 3, 5, 7, 8, 10],
+            "Major Pentatonic": [0, 2, 4, 7, 9],
+            "Minor Pentatonic": [0, 3, 5, 7, 10],
+            "Major Chord": [0, 4, 7],
+            "Minor Chord": [0, 3, 7],
+            "Dom7 Chord": [0, 4, 7, 10],
+            "Chromatic": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
         };
 
-        if (window.dash_clientside && window.dash_clientside.clientside.render_fretboard) {
-            window.dash_clientside.clientside.render_fretboard(mockData);
+        // --- Initialization ---
+        const rootSelect = document.getElementById('root-select');
+        const modeSelect = document.getElementById('mode-select');
+        
+        // Populate Dropdowns
+        NOTES.forEach((note, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.text = note;
+            if (note === "C") opt.selected = true;
+            rootSelect.appendChild(opt);
+        });
+
+        Object.keys(SCALES).forEach(scale => {
+            const opt = document.createElement('option');
+            opt.value = scale;
+            opt.text = scale;
+            modeSelect.appendChild(opt);
+        });
+
+        // --- Data Generation ---
+        function generateData() {
+            const rootIndex = parseInt(rootSelect.value);
+            const scaleName = modeSelect.value;
+            const scaleIntervals = SCALES[scaleName];
+            const maxFret = parseInt(document.getElementById('max-fret').value) || 15;
+            const showMarkers = document.getElementById('show-markers').checked;
+            const nightMode = document.getElementById('night-mode').checked;
+            const showFreq = document.getElementById('show-freq').checked;
+
+            const notes = [];
+            
+            // Generate notes for every string and fret
+            for (let s = 0; s < TUNING.length; s++) {
+                const openStringNote = TUNING[s].note;
+                const openStringOctave = TUNING[s].octave;
+                const openNoteIndex = NOTES.indexOf(openStringNote);
+
+                for (let f = 0; f <= maxFret; f++) {
+                    // Calculate current note index
+                    const currentNoteIndex = (openNoteIndex + f) % 12;
+                    
+                    // Calculate interval relative to root
+                    let interval = (currentNoteIndex - rootIndex);
+                    if (interval < 0) interval += 12;
+
+                    // Check if note is in the selected scale
+                    if (scaleIntervals.includes(interval)) {
+                        const noteName = NOTES[currentNoteIndex];
+                        
+                        // Determine Category (2=Root, 1=Scale)
+                        const cat = (interval === 0) ? 2 : 1;
+                        
+                        // Simple frequency calc (approximation for display)
+                        // f = f0 * (2)^(n/12)
+                        // This is just for visual label, not precise audio
+                        const semitonesFromC0 = (openStringOctave * 12) + openNoteIndex + f;
+                        const freqVal = 16.35 * Math.pow(2, semitonesFromC0 / 12);
+                        
+                        notes.push({
+                            id: `n-${s}-${f}`,
+                            fret: f,
+                            string: s + 1, // 1-based index for renderer
+                            note: noteName,
+                            cat: cat,
+                            is_chord: true, // Treat all visible notes as "chord" for visibility in this tool
+                            freq: Math.round(freqVal) + "Hz"
+                        });
+                    }
+                }
+            }
+
+            return {
+                max_fret: maxFret,
+                num_strings: TUNING.length,
+                show_markers: showMarkers,
+                highlight_frets: MARKERS,
+                night_mode: nightMode,
+                show_freq: showFreq,
+                min_adjacency: 2,
+                fret_labels: MARKERS.filter(f => f <= maxFret).map(f => ({fret: f, label: f.toString()})),
+                notes: notes
+            };
         }
+
+        // --- Render Loop ---
+        function update() {
+            const data = generateData();
+            
+            // Update Body Background for Night Mode
+            document.body.style.backgroundColor = data.night_mode ? '#121212' : '#f0f2f5';
+            document.querySelector('h1').style.color = data.night_mode ? '#eee' : '#333';
+            document.querySelector('.controls').style.backgroundColor = data.night_mode ? '#1e1e1e' : 'white';
+            document.querySelector('.controls').style.color = data.night_mode ? '#eee' : '#333';
+            document.getElementById('fretboard-container').style.backgroundColor = data.night_mode ? '#1e1e1e' : 'white';
+
+            if (window.dash_clientside && window.dash_clientside.clientside.render_fretboard) {
+                window.dash_clientside.clientside.render_fretboard(data);
+            }
+        }
+
+        // --- Event Listeners ---
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('change', update);
+            el.addEventListener('input', update);
+        });
+
+        // Initial Render
+        update();
     </script>
 </body>
 </html>

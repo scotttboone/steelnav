@@ -79,7 +79,7 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             // Generate grid data (one square per fret/string intersection)
             const gridData = [];
             // Standard markers: 3, 5, 7, 9, 12, 15, 17, 19, 21, 24...
-            const highlightFrets = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24, 27, 29, 31, 33, 36];
+            const highlightFrets = data.highlight_frets || [3, 5, 7, 9, 12, 15, 17, 19, 21, 24, 27, 29, 31, 33, 36];
             
             for (let f = 0; f <= maxFret; f++) {
                 for (let s = 1; s <= numStrings; s++) {
