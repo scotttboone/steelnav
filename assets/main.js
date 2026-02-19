@@ -36,7 +36,7 @@ const COPEDENT_LIBRARY = {
             {id: "A", label: "A", changes: {"5": 2, "10": 2}},
             {id: "B", label: "B", changes: {"3": 1, "6": 1}},
             {id: "C", label: "C", changes: {"4": 2, "5": 2}},
-            {id: "D", label: "D", changes: {"5": -1, "6": -2, "10": -1}}
+            {id: "D", label: "D", changes: {"5": -2, "6": -2, "10": -2}}
         ],
         levers: [
             {id: "LL", label: "LL", group: "Left Knee", changes: {"4": 1, "8": 1}},
@@ -116,7 +116,8 @@ const COPEDENT_LIBRARY = {
 // --- State Management ---
 const state = {
     activeModifiers: new Set(),
-    selectedChord: null // {root: "C", type: "Maj"}
+    selectedChord: null, // {root: "C", type: "Maj"}
+    hoveredChord: null   // {root: "C", type: "Maj"} (Preview)
 };
 
 // --- Helpers ---
@@ -181,13 +182,18 @@ function renderPedalControls() {
         
         if (i < pedals.length - 1) {
             const nextP = pedals[i+1];
-            const comp = compounds.find(c => 
+            // Find existing compound or create a default one
+            let comp = compounds.find(c => 
                 c.components.includes(p.id) && c.components.includes(nextP.id)
             );
             
-            if (comp) {
-                pedalsRow.appendChild(createCompoundBtn(comp));
+            if (!comp) {
+                comp = {
+                    components: [p.id, nextP.id],
+                    title: `Toggle ${p.label}+${nextP.label}`
+                };
             }
+            pedalsRow.appendChild(createCompoundBtn(comp));
         }
     });
     container.appendChild(pedalsRow);
@@ -243,6 +249,7 @@ function renderChordSelector() {
     const scaleName = document.getElementById('mode-select').value;
     const nightMode = document.getElementById('night-mode').checked;
     const complexity = document.getElementById('complexity-select').value;
+    const useFlats = document.getElementById('accidental-mode').value === 'flat';
     
     // Determine Key Index for centering
     let keyIdx = CIRCLE_OF_FIFTHS.indexOf(selectedKey);
@@ -291,7 +298,7 @@ function renderChordSelector() {
             const inKey = cIntervals.every(int => scaleIndices.has((cRootIdx + int) % 12));
 
             // Tooltip: Show chord tones
-            const chordNotes = cIntervals.map(i => getNoteName(cRootIdx + i, false)).join(', ');
+            const chordNotes = cIntervals.map(i => getNoteName(cRootIdx + i, useFlats)).join(', ');
             btn.title = `${noteName} ${rowType}: ${chordNotes}`;
             
             if (inKey) btn.classList.add('in-key');
@@ -308,6 +315,16 @@ function renderChordSelector() {
                     state.selectedChord = { root: noteName, type: rowType };
                 }
                 renderChordSelector(); // Re-render to update selection styles
+                update();
+            };
+
+            // Hover Effects
+            btn.onmouseenter = () => {
+                state.hoveredChord = { root: noteName, type: rowType };
+                update();
+            };
+            btn.onmouseleave = () => {
+                state.hoveredChord = null;
                 update();
             };
             col.appendChild(btn);
@@ -347,24 +364,26 @@ function generateData() {
     const nightMode = document.getElementById('night-mode').checked;
     const showFreq = document.getElementById('show-freq').checked;
     const labelMode = document.getElementById('fret-label-mode').value;
+    const useFlats = document.getElementById('accidental-mode').value === 'flat';
 
     // Chord Logic
     let chordIndices = new Set();
-    if (state.selectedChord) {
-        const cRootIdx = getNoteIndex(state.selectedChord.root);
-        const cIntervals = CHORD_FORMULAS[state.selectedChord.type];
+    const activeChord = state.hoveredChord || state.selectedChord;
+    if (activeChord) {
+        const cRootIdx = getNoteIndex(activeChord.root);
+        const cIntervals = CHORD_FORMULAS[activeChord.type];
         cIntervals.forEach(i => chordIndices.add((cRootIdx + i) % 12));
     }
 
     const notes = [];
     const fretLabels = [];
 
-    // Generate Fret Labels (All frets)
-    const string8Pitch = currentTuning[8] || 52; // Default to E3 if string 8 missing
+    // Generate Fret Labels (All frets) - Use BASE tuning (copedent), not currentTuning
+    const string8Pitch = copedent.tuning[8] || 52; 
     for (let f = 0; f <= maxFret; f++) {
         let labelText;
         if (labelMode === 'note') {
-            labelText = getNoteName(string8Pitch + f, false);
+            labelText = getNoteName(string8Pitch + f, useFlats);
         } else {
             labelText = f === 0 ? "Open" : f.toString();
         }
@@ -378,7 +397,7 @@ function generateData() {
         for (let f = -1; f <= maxFret + 1; f++) {
             const pitch = openPitch + f;
             const noteIndex = pitch % 12;
-            const noteName = getNoteName(pitch, false); // Default to sharps for now
+            const noteName = getNoteName(pitch, useFlats);
             
             // Determine Category
             let cat = 0; // Out
@@ -474,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.activeModifiers.clear();
                 renderPedalControls();
             }
-            if (el.id === 'root-select' || el.id === 'mode-select' || el.id === 'night-mode' || el.id === 'complexity-select') {
+            if (el.id === 'root-select' || el.id === 'mode-select' || el.id === 'night-mode' || el.id === 'complexity-select' || el.id === 'accidental-mode') {
                 renderChordSelector();
             }
             update();
