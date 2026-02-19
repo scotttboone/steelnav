@@ -363,7 +363,7 @@ function generateData() {
     for (let s = 1; s <= copedent.num_strings; s++) {
         const openPitch = currentTuning[s];
         
-        for (let f = 0; f <= maxFret; f++) {
+        for (let f = -1; f <= maxFret + 1; f++) {
             const pitch = openPitch + f;
             const noteIndex = pitch % 12;
             const noteName = getNoteName(pitch, false); // Default to sharps for now
@@ -380,10 +380,8 @@ function generateData() {
             // Frequency
             const freq = 440.0 * Math.pow(2, (pitch - 69) / 12.0);
 
-            // ID Generation: String-Fret (Stable for animation)
-            // If we used Pitch in ID, notes would fade out/in on pedal press.
-            // Using String-Fret makes them slide/update in place.
-            const id = `S${s}-F${f}`;
+            // ID Generation: String-Pitch (Enables sliding animation)
+            const id = `S${s}-P${pitch}`;
 
             notes.push({
                 id: id,
