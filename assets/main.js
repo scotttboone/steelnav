@@ -529,6 +529,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- Custom Tuning Modal Logic ---
+    const modal = document.getElementById("custom-tuning-modal");
+    const btn = document.getElementById("custom-tuning-btn");
+    const span = document.getElementsByClassName("close-modal")[0];
+    const applyBtn = document.getElementById("apply-custom-tuning");
+    const errorMsg = document.getElementById("tuning-error");
+
+    if (btn) {
+        btn.onclick = () => {
+            modal.style.display = "block";
+            const currentTuning = document.getElementById('tuning-select').value;
+            const data = COPEDENT_LIBRARY[currentTuning];
+            if (window.jsyaml) {
+                document.getElementById("custom-tuning-input").value = jsyaml.dump(data);
+            } else {
+                document.getElementById("custom-tuning-input").value = "Error: js-yaml library not loaded.";
+            }
+            errorMsg.textContent = "";
+        };
+    }
+
+    if (span) {
+        span.onclick = () => { modal.style.display = "none"; };
+    }
+
+    window.onclick = (event) => {
+        if (event.target == modal) { modal.style.display = "none"; }
+    };
+
+    if (applyBtn) {
+        applyBtn.onclick = () => {
+            try {
+                const input = document.getElementById("custom-tuning-input").value;
+                const parsed = jsyaml.load(input);
+                
+                if (!parsed || !parsed.num_strings || !parsed.tuning) {
+                    throw new Error("Invalid tuning definition. Must contain 'num_strings' and 'tuning'.");
+                }
+
+                COPEDENT_LIBRARY["User-defined"] = parsed;
+                
+                const tuningSelect = document.getElementById('tuning-select');
+                let found = false;
+                for (let i = 0; i < tuningSelect.options.length; i++) {
+                    if (tuningSelect.options[i].value === "User-defined") {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    const opt = document.createElement('option');
+                    opt.value = "User-defined";
+                    opt.text = "User-defined";
+                    tuningSelect.appendChild(opt);
+                }
+                
+                tuningSelect.value = "User-defined";
+                state.activeModifiers.clear();
+                renderPedalControls();
+                update();
+                modal.style.display = "none";
+            } catch (e) {
+                errorMsg.textContent = e.message;
+            }
+        };
+    }
+
     // Initial Render
     renderPedalControls();
     renderChordSelector();

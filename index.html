@@ -7,6 +7,8 @@
     
     <!-- Load D3.js -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Load js-yaml for parsing custom tunings -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     
     <style>
         body {
@@ -107,6 +109,15 @@
         .chord-btn.in-key { background-color: #a5d6a7; }
         .chord-btn.selected { border: 3px solid #ff8f00; box-shadow: 0 0 5px #ff8f00; font-weight: bold; }
         
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-modal:hover { color: black; }
+        #custom-tuning-input { width: 100%; height: 300px; font-family: monospace; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; box-sizing: border-box; }
+        #apply-custom-tuning { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        #apply-custom-tuning:hover { background-color: #45a049; }
+
         label { font-size: 14px; color: #555; font-weight: 500; }
     </style>
 </head>
@@ -140,6 +151,7 @@
                     </select>
                 </label>
                 <label><input type="checkbox" id="show-freq"> Show Freq</label>
+                <label><button id="custom-tuning-btn" style="padding: 5px 10px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px;">Custom Tuning...</button></label>
             </div>
         </details>
     </div>
@@ -159,6 +171,20 @@
         </label>
     </div>
     <div id="chord-selector-container" class="chord-selector-container"></div>
+
+    <!-- Custom Tuning Modal -->
+    <div id="custom-tuning-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 style="margin-top: 0;">User-Defined Tuning (YAML)</h2>
+            <p style="font-size: 14px; color: #666;">Modify the YAML below to define your custom tuning, pedals, and levers.</p>
+            <textarea id="custom-tuning-input"></textarea>
+            <div style="text-align: right;">
+                <span id="tuning-error" style="color: red; margin-right: 10px; font-size: 14px;"></span>
+                <button id="apply-custom-tuning">Apply Tuning</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Load Scripts -->
     <script src="assets/d3_fretboard.js"></script>
