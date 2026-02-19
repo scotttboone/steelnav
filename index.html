@@ -123,7 +123,7 @@
 </head>
 <body>
 
-    <h1>Fretboard Visualization</h1>
+    <h1>Pedal Steel Fretboard Visualizer</h1>
     
     <div class="controls">
         <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
@@ -133,17 +133,21 @@
             </div>
         </div>
         
-        <details style="margin-top: 15px; width: 100%; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
+        <details style="margin-top: 5px; width: 100%; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
             <summary style="cursor: pointer; font-weight: 500; color: #555; margin-bottom: 10px; outline: none;">Advanced Options</summary>
-            <div class="control-group" style="justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <!-- Row 1 -->
+            <div class="control-group" style="justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;">
                 <label>Frets: <input type="number" id="max-fret" value="24" min="5" max="36" style="width: 50px;"></label>
-                <label>Mode: <select id="mode-select"></select></label>
+                <label>Scale: <select id="mode-select"></select></label>
                 <label>Accidentals: 
                     <select id="accidental-mode">
                         <option value="sharp">Sharps (#)</option>
                         <option value="flat">Flats (b)</option>
                     </select>
                 </label>
+            </div>
+            <!-- Row 2 -->
+            <div class="control-group" style="justify-content: center; gap: 15px; flex-wrap: wrap;">
                 <label>Fret Labels: 
                     <select id="fret-label-mode">
                         <option value="number">Number</option>
@@ -152,6 +156,7 @@
                 </label>
                 <label><input type="checkbox" id="show-freq"> Show Freq</label>
                 <label><button id="custom-tuning-btn" style="padding: 5px 10px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px;">Custom Tuning...</button></label>
+                <label><button id="custom-scale-btn" style="padding: 5px 10px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px;">Custom Scale...</button></label>
             </div>
         </details>
     </div>
@@ -175,13 +180,27 @@
     <!-- Custom Tuning Modal -->
     <div id="custom-tuning-modal" class="modal">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
+            <span class="close-modal" id="close-tuning-modal">&times;</span>
             <h2 style="margin-top: 0;">User-Defined Tuning (YAML)</h2>
             <p style="font-size: 14px; color: #666;">Modify the YAML below to define your custom tuning, pedals, and levers.</p>
             <textarea id="custom-tuning-input"></textarea>
             <div style="text-align: right;">
                 <span id="tuning-error" style="color: red; margin-right: 10px; font-size: 14px;"></span>
                 <button id="apply-custom-tuning">Apply Tuning</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Scale Modal -->
+    <div id="custom-scale-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-scale-modal">&times;</span>
+            <h2 style="margin-top: 0;">User-Defined Scale (YAML)</h2>
+            <p style="font-size: 14px; color: #666;">Enter a list of semitone intervals (e.g., [0, 2, 4, 5, 7, 9, 11]).</p>
+            <textarea id="custom-scale-input" style="height: 150px;"></textarea>
+            <div style="text-align: right;">
+                <span id="scale-error" style="color: red; margin-right: 10px; font-size: 14px;"></span>
+                <button id="apply-custom-scale" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Apply Scale</button>
             </div>
         </div>
     </div>

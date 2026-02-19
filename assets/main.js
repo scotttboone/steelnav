@@ -530,15 +530,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Custom Tuning Modal Logic ---
-    const modal = document.getElementById("custom-tuning-modal");
-    const btn = document.getElementById("custom-tuning-btn");
-    const span = document.getElementsByClassName("close-modal")[0];
-    const applyBtn = document.getElementById("apply-custom-tuning");
-    const errorMsg = document.getElementById("tuning-error");
+    const tuningModal = document.getElementById("custom-tuning-modal");
+    const tuningBtn = document.getElementById("custom-tuning-btn");
+    const closeTuningBtn = document.getElementById("close-tuning-modal");
+    const applyTuningBtn = document.getElementById("apply-custom-tuning");
+    const tuningErrorMsg = document.getElementById("tuning-error");
 
-    if (btn) {
-        btn.onclick = () => {
-            modal.style.display = "block";
+    if (tuningBtn) {
+        tuningBtn.onclick = () => {
+            tuningModal.style.display = "block";
             const currentTuning = document.getElementById('tuning-select').value;
             const data = COPEDENT_LIBRARY[currentTuning];
             if (window.jsyaml) {
@@ -546,20 +546,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 document.getElementById("custom-tuning-input").value = "Error: js-yaml library not loaded.";
             }
-            errorMsg.textContent = "";
+            tuningErrorMsg.textContent = "";
         };
     }
 
-    if (span) {
-        span.onclick = () => { modal.style.display = "none"; };
+    if (closeTuningBtn) {
+        closeTuningBtn.onclick = () => { tuningModal.style.display = "none"; };
     }
 
-    window.onclick = (event) => {
-        if (event.target == modal) { modal.style.display = "none"; }
-    };
-
-    if (applyBtn) {
-        applyBtn.onclick = () => {
+    if (applyTuningBtn) {
+        applyTuningBtn.onclick = () => {
             try {
                 const input = document.getElementById("custom-tuning-input").value;
                 const parsed = jsyaml.load(input);
@@ -589,12 +585,74 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.activeModifiers.clear();
                 renderPedalControls();
                 update();
-                modal.style.display = "none";
+                tuningModal.style.display = "none";
             } catch (e) {
-                errorMsg.textContent = e.message;
+                tuningErrorMsg.textContent = e.message;
             }
         };
     }
+
+    // --- Custom Scale Modal Logic ---
+    const scaleModal = document.getElementById("custom-scale-modal");
+    const scaleBtn = document.getElementById("custom-scale-btn");
+    const closeScaleBtn = document.getElementById("close-scale-modal");
+    const applyScaleBtn = document.getElementById("apply-custom-scale");
+    const scaleErrorMsg = document.getElementById("scale-error");
+
+    if (scaleBtn) {
+        scaleBtn.onclick = () => {
+            scaleModal.style.display = "block";
+            const currentScale = document.getElementById('mode-select').value;
+            const data = SCALES[currentScale];
+            if (window.jsyaml) {
+                document.getElementById("custom-scale-input").value = jsyaml.dump(data);
+            } else {
+                document.getElementById("custom-scale-input").value = "Error: js-yaml library not loaded.";
+            }
+            scaleErrorMsg.textContent = "";
+        };
+    }
+
+    if (closeScaleBtn) {
+        closeScaleBtn.onclick = () => { scaleModal.style.display = "none"; };
+    }
+
+    if (applyScaleBtn) {
+        applyScaleBtn.onclick = () => {
+            try {
+                const input = document.getElementById("custom-scale-input").value;
+                const parsed = jsyaml.load(input);
+
+                if (!Array.isArray(parsed) || !parsed.every(Number.isInteger)) {
+                    throw new Error("Invalid scale definition. Must be a list of integers (e.g., [0, 2, 4...]).");
+                }
+
+                SCALES["User-defined"] = parsed;
+
+                const modeSelect = document.getElementById('mode-select');
+                // Add option if it doesn't exist
+                if (![...modeSelect.options].some(opt => opt.value === "User-defined")) {
+                    const opt = document.createElement('option');
+                    opt.value = "User-defined";
+                    opt.text = "User-defined";
+                    modeSelect.appendChild(opt);
+                }
+
+                modeSelect.value = "User-defined";
+                renderChordSelector();
+                update();
+                scaleModal.style.display = "none";
+            } catch (e) {
+                scaleErrorMsg.textContent = e.message;
+            }
+        };
+    }
+
+    // Close modals on outside click
+    window.onclick = (event) => {
+        if (event.target == tuningModal) { tuningModal.style.display = "none"; }
+        if (event.target == scaleModal) { scaleModal.style.display = "none"; }
+    };
 
     // Initial Render
     renderPedalControls();
