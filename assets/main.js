@@ -67,6 +67,19 @@ const COPEDENT_LIBRARY = {
         ],
         compounds: [{id: "AB", label: "", components: ["A", "B"], title: "Toggle A+B"}]
     },
+    "E9 Day": {
+        num_strings: 10,
+        tuning: {1: 66, 2: 63, 3: 68, 4: 64, 5: 59, 6: 56, 7: 54, 8: 52, 9: 50, 10: 47},
+        pedals: [
+            {id: "A", label: "A", changes: {"3": 1, "6": 1}},
+            {id: "B", label: "B", changes: {"5": 2, "10": 2}},
+            {id: "C", label: "C", changes: {"4": 2, "5": 2}}
+        ],
+        levers: [
+            {id: "LKL", label: "LKL", group: "Left Knee", changes: {"4": 1, "8": 1}},
+            {id: "LKR", label: "LKR", group: "Left Knee", changes: {"4": -1, "8": -1}}
+        ]
+    },
     "C6 Standard": {
         num_strings: 10,
         tuning: {1: 67, 2: 64, 3: 60, 4: 57, 5: 55, 6: 52, 7: 48, 8: 45, 9: 41, 10: 36},
@@ -95,7 +108,8 @@ const COPEDENT_LIBRARY = {
         levers: [
             {id: "LKL", label: "LKL", group: "Left Knee", changes: {"4": 1, "8": 1}},
             {id: "LKR", label: "LKR", group: "Left Knee", changes: {"4": -1, "8": -1}}
-        ]
+        ],
+        compounds: [{id: "AB", label: "", components: ["A", "B"], title: "Toggle A+B"}]
     }
 };
 
@@ -228,6 +242,7 @@ function renderChordSelector() {
     const selectedKey = document.getElementById('root-select').options[document.getElementById('root-select').selectedIndex].text;
     const scaleName = document.getElementById('mode-select').value;
     const nightMode = document.getElementById('night-mode').checked;
+    const complexity = document.getElementById('complexity-select').value;
     
     // Determine Key Index for centering
     let keyIdx = CIRCLE_OF_FIFTHS.indexOf(selectedKey);
@@ -244,6 +259,12 @@ function renderChordSelector() {
     const scaleIntervals = SCALES[scaleName] || SCALES['Major'];
     const scaleIndices = new Set(scaleIntervals.map(i => (rootIdx + i) % 12));
 
+    // Determine Visible Rows based on Complexity
+    let visibleRows = ['Maj', 'Min'];
+    if (complexity === 'moderate') visibleRows.push('Maj7', '7', 'm7', '6', 'm6');
+    if (complexity === 'advanced') visibleRows.push('Maj7', '7', 'm7', '6', 'm6', 'Aug', 'Dim', 'm7b5');
+    const visibleSet = new Set(visibleRows);
+
     for (let i = 0; i < 12; i++) {
         const noteIdx = (startIdx + i) % 12;
         const noteName = CIRCLE_OF_FIFTHS[noteIdx];
@@ -258,7 +279,7 @@ function renderChordSelector() {
 
         CHORD_ROWS.forEach(rowType => {
             // Simplified visibility logic (show basic by default)
-            if (['Aug', 'Dim', 'm7b5'].includes(rowType)) return; 
+            if (!visibleSet.has(rowType)) return; 
 
             const btn = document.createElement('button');
             btn.className = 'chord-btn';
@@ -443,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.activeModifiers.clear();
                 renderPedalControls();
             }
-            if (el.id === 'root-select' || el.id === 'mode-select' || el.id === 'night-mode') {
+            if (el.id === 'root-select' || el.id === 'mode-select' || el.id === 'night-mode' || el.id === 'complexity-select') {
                 renderChordSelector();
             }
             update();

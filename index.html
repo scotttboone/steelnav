@@ -117,6 +117,13 @@
                 <label>Tuning: <select id="tuning-select"></select></label>
                 <label>Root: <select id="root-select"></select></label>
                 <label>Mode: <select id="mode-select"></select></label>
+                <label>Complexity: 
+                    <select id="complexity-select">
+                        <option value="basic" selected>Basic</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </label>
             </div>
         </div>
         <div class="control-group" style="margin-top:10px;">
@@ -127,13 +134,10 @@
             <label><input type="checkbox" id="show-markers" checked> Markers</label>
             <label><input type="checkbox" id="show-freq"> Freq</label>
         </div>
-        <hr style="width:100%; border:0; border-top:1px solid #eee; margin:10px 0;">
-        <div class="control-group" id="dynamic-controls">
-            <!-- Pedals and Levers will be injected here by JS -->
-        </div>
     </div>
 
     <div id="fretboard-container"></div>
+    <div id="dynamic-controls" style="margin-top: 20px; text-align: center;"></div>
     <div id="chord-selector-container" class="chord-selector-container"></div>
 
     <!-- Load Scripts -->
