@@ -43,9 +43,6 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
                 g.append('g')
                     .attr('class', 'notes-layer')
                     .attr('clip-path', 'url(#fretboard-clip)');
-                g.append('g')
-                    .attr('class', 'highlights-layer')
-                    .attr('clip-path', 'url(#fretboard-clip)');
             }
 
             // Update SVG dimensions
@@ -136,13 +133,12 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             // --- Grouping Logic for Chord Highlights ---
             // 1. Organize notes by fret
             const notesByFret = {};
+            // Reset group flags
             notes.forEach(n => {
-                n.in_group = false; // Reset flag
+                n.group_pos = null; 
                 if (!notesByFret[n.fret]) notesByFret[n.fret] = [];
                 notesByFret[n.fret].push(n);
             });
-
-            const groups = [];
 
             // 2. Find vertical runs of chord tones
             Object.keys(notesByFret).forEach(fret => {
@@ -154,14 +150,17 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
                 
                 const processRun = (run) => {
                     if (run.length >= minAdjacency) {
-                        groups.push({
-                            fret: parseInt(fret),
-                            startString: run[0].string,
-                            endString: run[run.length - 1].string,
-                            count: run.length,
-                            id: `G-F${fret}-S${run[0].string}`
+                        run.forEach((n, i) => {
+                            if (run.length === 1) {
+                                n.group_pos = 'single';
+                            } else if (i === 0) {
+                                n.group_pos = 'start'; // Top
+                            } else if (i === run.length - 1) {
+                                n.group_pos = 'end';   // Bottom
+                            } else {
+                                n.group_pos = 'mid';
+                            }
                         });
-                        run.forEach(n => n.in_group = true);
                     }
                 };
 
@@ -182,6 +181,23 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
                 processRun(currentRun);
             });
 
+            // Helper to generate path for highlight segments
+            const getHighlightPath = (pos) => {
+                const r = 4; // Corner radius
+                const l = 2, t = 2, r_edge = cellSize - 2, b = cellSize - 2;
+                const cellT = 0, cellB = cellSize;
+                
+                if (!pos) return '';
+                if (pos === 'single') return `M ${l},${t+r} Q ${l},${t} ${l+r},${t} H ${r_edge-r} Q ${r_edge},${t} ${r_edge},${t+r} V ${b-r} Q ${r_edge},${b} ${r_edge-r},${b} H ${l+r} Q ${l},${b} ${l},${b-r} Z`;
+                
+                // Start (Top): Open bottom
+                if (pos === 'start') return `M ${l},${cellB} V ${t+r} Q ${l},${t} ${l+r},${t} H ${r_edge-r} Q ${r_edge},${t} ${r_edge},${t+r} V ${cellB}`;
+                // Mid: Open top and bottom (vertical lines)
+                if (pos === 'mid') return `M ${l},${cellB} V ${cellT} M ${r_edge},${cellT} V ${cellB}`;
+                // End (Bottom): Open top
+                if (pos === 'end') return `M ${l},${cellT} V ${b-r} Q ${l},${b} ${l+r},${b} H ${r_edge-r} Q ${r_edge},${b} ${r_edge},${b-r} V ${cellT}`;
+            };
+
             // --- Notes Rendering ---
             const t = svg.transition().duration(500).ease(d3.easeCubicInOut);
             const notesLayer = g.select('.notes-layer');
@@ -201,6 +217,13 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
                 .attr('class', 'note-group')
                 .attr('opacity', 0)
                 .attr('transform', d => `translate(${x(d.fret)}, ${y(d.string)})`);
+
+            // Add Highlight Path (Behind the rect)
+            enter.append('path')
+                .attr('class', 'chord-highlight')
+                .attr('fill', 'none')
+                .attr('stroke', theme.groupStroke)
+                .attr('stroke-width', 3);
 
             enter.append('rect')
                 .attr('width', cellSize - 4)
@@ -230,9 +253,14 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             allNotes.select('rect')
                 .transition(t)
                 .attr('fill', d => colors[d.cat])
-                // Only draw individual stroke if NOT in a group
-                .attr('stroke', d => (d.is_chord && !d.in_group) ? theme.groupStroke : (d.cat > 0 ? '#333' : 'none')) 
-                .attr('stroke-width', d => (d.is_chord && !d.in_group) ? 3 : 1);
+                .attr('stroke', d => d.cat > 0 ? '#333' : 'none') 
+                .attr('stroke-width', 1);
+
+            // Update Highlight Path
+            allNotes.select('.chord-highlight')
+                .transition(t)
+                .attr('d', d => getHighlightPath(d.group_pos))
+                .attr('opacity', d => d.group_pos ? 1 : 0);
 
             // Update Text (Note Name + Optional Frequency)
             allNotes.select('text').each(function(d) {
@@ -247,32 +275,6 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             allNotes.select('text')
                 .attr('fill', d => textColors[d.cat])
                 .style('font-weight', d => d.is_chord ? 'bold' : 'normal');
-
-            // --- Highlights Layer (Group Borders) ---
-            const highlightsLayer = g.select('.highlights-layer');
-            const groupRects = highlightsLayer.selectAll('.group-rect')
-                .data(groups, d => d.id);
-
-            groupRects.exit().remove();
-
-            groupRects.enter().append('rect')
-                .attr('class', 'group-rect')
-                .attr('fill', 'none')
-                .attr('stroke', theme.groupStroke)
-                .attr('stroke-width', 3)
-                .attr('rx', 4)
-                .attr('opacity', 0) // Start invisible for fade-in
-                .attr('x', d => x(d.fret) + 2) // Set initial position
-                .attr('y', d => y(d.startString) + 2)
-                .attr('width', cellSize - 4)
-                .attr('height', d => (d.endString - d.startString + 1) * cellSize - 4)
-                .merge(groupRects)
-                .attr('opacity', 1) // Fade in
-                .attr('stroke', theme.groupStroke)
-                .attr('x', d => x(d.fret) + 2)
-                .attr('y', d => y(d.startString) + 2)
-                .attr('width', cellSize - 4)
-                .attr('height', d => (d.endString - d.startString + 1) * cellSize - 4);
 
             return "rendered";
         };
