@@ -6,8 +6,13 @@ const CIRCLE_OF_FIFTHS = ['Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 
 const CHORD_ROWS = ['Maj', 'Min', 'Maj7', '7', 'm7', '6', 'm6', 'Aug', 'Dim', 'm7b5'];
 
 const SCALES = {
-    "Major": [0, 2, 4, 5, 7, 9, 11],
-    "Minor": [0, 2, 3, 5, 7, 8, 10],
+    "Ionian (Major)": [0, 2, 4, 5, 7, 9, 11],
+    "Dorian": [0, 2, 3, 5, 7, 9, 10],
+    "Phrygian": [0, 1, 3, 5, 7, 8, 10],
+    "Lydian": [0, 2, 4, 6, 7, 9, 11],
+    "Mixolydian": [0, 2, 4, 5, 7, 9, 10],
+    "Aeolian (Minor)": [0, 2, 3, 5, 7, 8, 10],
+    "Locrian": [0, 1, 3, 5, 6, 8, 10],
     "Major Pentatonic": [0, 2, 4, 7, 9],
     "Minor Pentatonic": [0, 3, 5, 7, 10],
     "Mixolydian": [0, 2, 4, 5, 7, 9, 10],
@@ -60,10 +65,10 @@ const COPEDENT_LIBRARY = {
             {id: "C", label: "C", changes: {"4": 2, "5": 2}}
         ],
         levers: [
-            {id: "LKL", label: "LKL", group: "Left Knee", changes: {"4": 1, "8": 1}},
-            {id: "LKR", label: "LKR", group: "Left Knee", changes: {"4": -1, "8": -1}},
-            {id: "RKL", label: "RKL", group: "Right Knee", changes: {"1": 1, "7": 1}},
-            {id: "RKR", label: "RKR", group: "Right Knee", changes: {"2": -1, "9": -1}}
+            {id: "LL", label: "LL", group: "Left Knee", changes: {"4": 1, "8": 1}},
+            {id: "LR", label: "LR", group: "Left Knee", changes: {"4": -1, "8": -1}},
+            {id: "RL", label: "RL", group: "Right Knee", changes: {"1": 1, "7": 1}},
+            {id: "RR", label: "RR", group: "Right Knee", changes: {"2": -1, "9": -1}}
         ],
         compounds: [{id: "AB", label: "", components: ["A", "B"], title: "Toggle A+B"}]
     },
@@ -76,8 +81,10 @@ const COPEDENT_LIBRARY = {
             {id: "C", label: "C", changes: {"4": 2, "5": 2}}
         ],
         levers: [
-            {id: "LKL", label: "LKL", group: "Left Knee", changes: {"4": 1, "8": 1}},
-            {id: "LKR", label: "LKR", group: "Left Knee", changes: {"4": -1, "8": -1}}
+            {id: "LL", label: "LL", group: "Left Knee", changes: {"4": 1, "8": 1}},
+            {id: "LR", label: "LR", group: "Left Knee", changes: {"4": -1, "8": -1}},
+            {id: "RL", label: "RL", group: "Right Knee", changes: {"1": 1, "7": 1}},
+            {id: "RR", label: "RR", group: "Right Knee", changes: {"2": -1, "9": -1}}
         ]
     },
     "C6 Standard": {
@@ -91,8 +98,10 @@ const COPEDENT_LIBRARY = {
             {id: "P8", label: "P8", changes: {"4": -2, "8": -2}}
         ],
         levers: [
-            {id: "LKL", label: "LKL", group: "Left Knee", changes: {"1": -1, "5": -1}},
-            {id: "LKR", label: "LKR", group: "Left Knee", changes: {"2": 1, "6": 1}}
+            {id: "LL", label: "LL", group: "Left Knee", changes: {"1": -1, "5": -1}},
+            {id: "LR", label: "LR", group: "Left Knee", changes: {"2": 1, "6": 1}},
+            {id: "RL", label: "RL", group: "Right Knee", changes: {"3": -1}},
+            {id: "RR", label: "RR", group: "Right Knee", changes: {"4": -2}}
         ]
     },
     "12-string Universal": {
@@ -106,8 +115,10 @@ const COPEDENT_LIBRARY = {
             {id: "P6", label: "P6", changes: {"2": -1}}
         ],
         levers: [
-            {id: "LKL", label: "LKL", group: "Left Knee", changes: {"4": 1, "8": 1}},
-            {id: "LKR", label: "LKR", group: "Left Knee", changes: {"4": -1, "8": -1}}
+            {id: "LL", label: "LL", group: "Left Knee", changes: {"4": 1, "8": 1}},
+            {id: "LR", label: "LR", group: "Left Knee", changes: {"4": -1, "8": -1}},
+            {id: "RL", label: "RL", group: "Right Knee", changes: {"1": 1, "7": 1}},
+            {id: "RR", label: "RR", group: "Right Knee", changes: {"2": -1, "9": -1}}
         ],
         compounds: [{id: "AB", label: "", components: ["A", "B"], title: "Toggle A+B"}]
     }
@@ -211,6 +222,17 @@ function createControlBtn(label, id) {
             state.activeModifiers.delete(id);
             btn.classList.remove('active');
         } else {
+            // Mutual Exclusion for RR1/RR2
+            if (id === 'RR1' && state.activeModifiers.has('RR2')) {
+                state.activeModifiers.delete('RR2');
+                const other = document.querySelector('button[data-id="RR2"]');
+                if (other) other.classList.remove('active');
+            }
+            if (id === 'RR2' && state.activeModifiers.has('RR1')) {
+                state.activeModifiers.delete('RR1');
+                const other = document.querySelector('button[data-id="RR1"]');
+                if (other) other.classList.remove('active');
+            }
             state.activeModifiers.add(id);
             btn.classList.add('active');
         }
@@ -247,7 +269,6 @@ function renderChordSelector() {
     
     const selectedKey = document.getElementById('root-select').options[document.getElementById('root-select').selectedIndex].text;
     const scaleName = document.getElementById('mode-select').value;
-    const nightMode = document.getElementById('night-mode').checked;
     const complexity = document.getElementById('complexity-select').value;
     const useFlats = document.getElementById('accidental-mode').value === 'flat';
     
@@ -263,25 +284,26 @@ function renderChordSelector() {
 
     // Scale Intervals for highlighting
     const rootIdx = getNoteIndex(selectedKey);
-    const scaleIntervals = SCALES[scaleName] || SCALES['Major'];
+    const scaleIntervals = SCALES[scaleName] || SCALES['Ionian (Major)'];
     const scaleIndices = new Set(scaleIntervals.map(i => (rootIdx + i) % 12));
 
     // Determine Visible Rows based on Complexity
     let visibleRows = ['Maj', 'Min'];
-    if (complexity === 'moderate') visibleRows.push('Maj7', '7', 'm7', '6', 'm6');
+    if (complexity === 'moderate') visibleRows.push('Maj7', '7', 'm7');
     if (complexity === 'advanced') visibleRows.push('Maj7', '7', 'm7', '6', 'm6', 'Aug', 'Dim', 'm7b5');
     const visibleSet = new Set(visibleRows);
 
     for (let i = 0; i < 12; i++) {
         const noteIdx = (startIdx + i) % 12;
         const noteName = CIRCLE_OF_FIFTHS[noteIdx];
+        const displayLabel = getNoteName(getNoteIndex(noteName), useFlats);
         
         const col = document.createElement('div');
         col.className = 'chord-col';
         
         const label = document.createElement('div');
         label.className = 'chord-col-label';
-        label.textContent = noteName;
+        label.textContent = displayLabel;
         col.appendChild(label);
 
         CHORD_ROWS.forEach(rowType => {
@@ -290,7 +312,7 @@ function renderChordSelector() {
 
             const btn = document.createElement('button');
             btn.className = 'chord-btn';
-            btn.textContent = rowType === 'Maj' ? noteName : `${noteName}\n${rowType}`;
+            btn.textContent = rowType === 'Maj' ? displayLabel : `${displayLabel}\n${rowType}`;
             
             // Check if in key
             const cRootIdx = getNoteIndex(noteName);
@@ -299,7 +321,7 @@ function renderChordSelector() {
 
             // Tooltip: Show chord tones
             const chordNotes = cIntervals.map(i => getNoteName(cRootIdx + i, useFlats)).join(', ');
-            btn.title = `${noteName} ${rowType}: ${chordNotes}`;
+            btn.title = `${displayLabel} ${rowType}: ${chordNotes}`;
             
             if (inKey) btn.classList.add('in-key');
             
@@ -361,7 +383,6 @@ function generateData() {
     
     const maxFret = parseInt(document.getElementById('max-fret').value) || 15;
     const showMarkers = true;
-    const nightMode = document.getElementById('night-mode').checked;
     const showFreq = document.getElementById('show-freq').checked;
     const labelMode = document.getElementById('fret-label-mode').value;
     const useFlats = document.getElementById('accidental-mode').value === 'flat';
@@ -431,9 +452,8 @@ function generateData() {
         num_strings: copedent.num_strings,
         show_markers: showMarkers,
         highlight_frets: MARKERS,
-        night_mode: nightMode,
         show_freq: showFreq,
-        min_adjacency: 2,
+        min_adjacency: 1,
         fret_labels: fretLabels,
         notes: notes
     };
@@ -442,20 +462,26 @@ function generateData() {
 function update() {
     const data = generateData();
     
-    // Update Theme
-    const bg = data.night_mode ? '#121212' : '#f0f2f5';
-    const text = data.night_mode ? '#eee' : '#333';
-    document.body.style.backgroundColor = bg;
-    document.body.style.color = text;
-    document.querySelectorAll('.controls, .chord-selector-container').forEach(el => {
-        el.style.backgroundColor = data.night_mode ? '#1e1e1e' : 'white';
-        el.style.color = text;
-    });
-
     // Render D3
     if (window.dash_clientside && window.dash_clientside.clientside.render_fretboard) {
         window.dash_clientside.clientside.render_fretboard(data);
     }
+}
+
+function updateRootOptions() {
+    const rootSelect = document.getElementById('root-select');
+    const useFlats = document.getElementById('accidental-mode').value === 'flat';
+    const notes = useFlats ? NOTES_FLAT : NOTES_SHARP;
+    const currentVal = rootSelect.value;
+    
+    rootSelect.innerHTML = '';
+    notes.forEach((note, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.text = note;
+        rootSelect.appendChild(opt);
+    });
+    rootSelect.value = currentVal;
 }
 
 // --- Initialization ---
@@ -493,7 +519,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.activeModifiers.clear();
                 renderPedalControls();
             }
-            if (el.id === 'root-select' || el.id === 'mode-select' || el.id === 'night-mode' || el.id === 'complexity-select' || el.id === 'accidental-mode') {
+            if (el.id === 'accidental-mode') {
+                updateRootOptions();
+            }
+            if (el.id === 'root-select' || el.id === 'mode-select' || el.id === 'complexity-select' || el.id === 'accidental-mode') {
                 renderChordSelector();
             }
             update();

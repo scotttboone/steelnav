@@ -11,12 +11,9 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             const minAdjacency = data.min_adjacency || 1;
             const numStrings = data.num_strings || 10;
             const showFreq = data.show_freq || false;
-            const nightMode = data.night_mode || false;
 
             // --- Colors ---
-            const theme = nightMode 
-                ? { bg: '#1e1e1e', cell: '#222', cellHigh: '#333', stroke: '#444', text: '#eee', markerBg: '#eee', markerText: '#000', noteOut: '#444', noteScale: '#66bb6a', noteRoot: '#29b6f6', noteTextOut: '#aaa', noteTextIn: '#000', noteTextRoot: '#000', groupStroke: '#fff' }
-                : { bg: '#fff', cell: '#fff', cellHigh: '#f0f0f0', stroke: '#ddd', text: '#000', markerBg: '#000', markerText: '#fff', noteOut: '#eeeeee', noteScale: '#a5d6a7', noteRoot: '#42a5f5', noteTextOut: '#ccc', noteTextIn: '#000', noteTextRoot: '#fff', groupStroke: '#000' };
+            const theme = { bg: '#fff', cell: '#fff', cellHigh: '#f0f0f0', stroke: '#ddd', text: '#000', markerBg: '#000', markerText: '#fff', noteOut: '#eeeeee', noteScale: '#a5d6a7', noteRoot: '#42a5f5', noteTextOut: '#ccc', noteTextIn: '#000', noteTextRoot: '#fff', groupStroke: '#000' };
             
             // --- Configuration ---
             const cellSize = 40; // Fixed square size in pixels
