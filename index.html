@@ -18,11 +18,14 @@
             padding: 20px;
         }
         h1 { color: #333; }
-        #fretboard-container {
+        .display-panel {
             background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .controls {
             background: white;
@@ -57,12 +60,12 @@
         }
         .lever-group { display: flex; gap: 5px; }
         button.control-btn {
-            padding: 5px 10px;
+            padding: 8px 16px;
             cursor: pointer;
             border: 1px solid #ccc;
             background: #f8f9fa;
-            font-size: 14px;
-            border-radius: 4px;
+            font-size: 20px;
+            border-radius: 6px;
         }
         button.control-btn.active {
             background-color: #4CAF50;
@@ -70,7 +73,7 @@
             border-color: #4CAF50;
         }
         button.compound-btn {
-            width: 15px; height: 30px;
+            width: 24px; height: 48px;
             padding: 0; margin: 0 2px;
             background: #e0e0e0; border: 1px solid #ccc;
             cursor: pointer;
@@ -117,27 +120,36 @@
                 <label>Tuning: <select id="tuning-select"></select></label>
                 <label>Root: <select id="root-select"></select></label>
                 <label>Mode: <select id="mode-select"></select></label>
-                <label>Complexity: 
+            </div>
+        </div>
+        
+        <details style="margin-top: 15px; width: 100%; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
+            <summary style="cursor: pointer; font-weight: 500; color: #555; margin-bottom: 10px; outline: none;">Advanced Options</summary>
+            <div class="control-group" style="justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <label>Frets: <input type="number" id="max-fret" value="24" min="5" max="36" style="width: 50px;"></label>
+                <label>Chord Complexity: 
                     <select id="complexity-select">
                         <option value="basic" selected>Basic</option>
                         <option value="moderate">Moderate</option>
                         <option value="advanced">Advanced</option>
                     </select>
                 </label>
+                <label>Labels: 
+                    <select id="fret-label-mode">
+                        <option value="number">Number</option>
+                        <option value="note">Note</option>
+                    </select>
+                </label>
+                <label><input type="checkbox" id="night-mode"> Night Mode</label>
+                <label><input type="checkbox" id="show-freq"> Show Freq</label>
             </div>
-        </div>
-        <div class="control-group" style="margin-top:10px;">
-            <label>Frets: <input type="number" id="max-fret" value="15" min="5" max="24" style="width: 50px;"></label>
-        </div>
-        <div class="control-group">
-            <label><input type="checkbox" id="night-mode"> Night Mode</label>
-            <label><input type="checkbox" id="show-markers" checked> Markers</label>
-            <label><input type="checkbox" id="show-freq"> Freq</label>
-        </div>
+        </details>
     </div>
 
-    <div id="fretboard-container"></div>
-    <div id="dynamic-controls" style="margin-top: 20px; text-align: center;"></div>
+    <div class="display-panel">
+        <div id="fretboard-container"></div>
+        <div id="dynamic-controls" style="margin-top: 20px; text-align: center;"></div>
+    </div>
     <div id="chord-selector-container" class="chord-selector-container"></div>
 
     <!-- Load Scripts -->

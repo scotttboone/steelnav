@@ -289,6 +289,10 @@ function renderChordSelector() {
             const cRootIdx = getNoteIndex(noteName);
             const cIntervals = CHORD_FORMULAS[rowType];
             const inKey = cIntervals.every(int => scaleIndices.has((cRootIdx + int) % 12));
+
+            // Tooltip: Show chord tones
+            const chordNotes = cIntervals.map(i => getNoteName(cRootIdx + i, false)).join(', ');
+            btn.title = `${noteName} ${rowType}: ${chordNotes}`;
             
             if (inKey) btn.classList.add('in-key');
             
@@ -339,9 +343,10 @@ function generateData() {
     const scaleIntervals = SCALES[scaleName];
     
     const maxFret = parseInt(document.getElementById('max-fret').value) || 15;
-    const showMarkers = document.getElementById('show-markers').checked;
+    const showMarkers = true;
     const nightMode = document.getElementById('night-mode').checked;
     const showFreq = document.getElementById('show-freq').checked;
+    const labelMode = document.getElementById('fret-label-mode').value;
 
     // Chord Logic
     let chordIndices = new Set();
@@ -355,8 +360,15 @@ function generateData() {
     const fretLabels = [];
 
     // Generate Fret Labels (All frets)
+    const string8Pitch = currentTuning[8] || 52; // Default to E3 if string 8 missing
     for (let f = 0; f <= maxFret; f++) {
-        fretLabels.push({fret: f, label: f === 0 ? "Open" : f.toString()});
+        let labelText;
+        if (labelMode === 'note') {
+            labelText = getNoteName(string8Pitch + f, false);
+        } else {
+            labelText = f === 0 ? "Open" : f.toString();
+        }
+        fretLabels.push({fret: f, label: labelText});
     }
 
     // Generate Notes
