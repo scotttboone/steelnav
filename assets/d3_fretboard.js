@@ -1,6 +1,7 @@
 window.FretboardApp = window.FretboardApp || {};
 window.FretboardApp.render = function(data) {
-            if (!data) return window.dash_clientside.no_update;
+            if (!data) return;
+            if (typeof d3 === 'undefined') { console.error("D3.js is not loaded."); return; }
 
             const containerId = '#fretboard-container';
             const notes = data.notes;
@@ -24,6 +25,10 @@ window.FretboardApp.render = function(data) {
 
             // Select container
             const container = d3.select(containerId);
+            if (container.empty()) {
+                console.error(`Container ${containerId} not found in DOM.`);
+                return;
+            }
             
             // Create SVG if it doesn't exist
             let svg = container.select('svg');

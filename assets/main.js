@@ -466,6 +466,8 @@ function update(transitionDuration = 500) {
     // Render D3
     if (window.FretboardApp && window.FretboardApp.render) {
         window.FretboardApp.render(data);
+    } else {
+        console.error("FretboardApp.render is not defined. Ensure d3_fretboard.js is loaded.");
     }
 }
 
