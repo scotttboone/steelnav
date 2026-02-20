@@ -1,6 +1,5 @@
-window.dash_clientside = window.dash_clientside || {};
-window.dash_clientside.clientside = window.dash_clientside.clientside || {};
-window.dash_clientside.clientside.render_fretboard = function(data) {
+window.FretboardApp = window.FretboardApp || {};
+window.FretboardApp.render = function(data) {
             if (!data) return window.dash_clientside.no_update;
 
             const containerId = '#fretboard-container';
@@ -11,6 +10,7 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             const minAdjacency = data.min_adjacency || 1;
             const numStrings = data.num_strings || 10;
             const showFreq = data.show_freq || false;
+            const transitionDuration = data.transition_duration !== undefined ? data.transition_duration : 500;
 
             // --- Colors ---
             const theme = { bg: '#fff', cell: '#fff', cellHigh: '#f0f0f0', stroke: '#ddd', text: '#000', markerBg: '#000', markerText: '#fff', noteOut: '#b2b2b2', noteScale: '#a5d6a7', noteRoot: '#42a5f5', noteTextOut: '#555', noteTextIn: '#000', noteTextRoot: '#fff', groupStroke: '#000' };
@@ -46,7 +46,9 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             }
 
             // Update SVG dimensions
-            svg.attr('width', width).attr('height', height);
+            svg.attr('viewBox', `0 0 ${width} ${height}`)
+               .style('max-width', '100%')
+               .style('height', 'auto');
             const g = svg.select('.main-group')
                 .attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -204,7 +206,7 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             };
 
             // --- Notes Rendering ---
-            const t = svg.transition().duration(500).ease(d3.easeCubicInOut);
+            const t = svg.transition().duration(transitionDuration).ease(d3.easeCubicInOut);
             const notesLayer = g.select('.notes-layer');
 
             // Data Join with ID for smooth sliding

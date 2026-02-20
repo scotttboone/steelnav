@@ -130,6 +130,7 @@ const state = {
     selectedChord: null, // {root: "C", type: "Maj"}
     hoveredChord: null   // {root: "C", type: "Maj"} (Preview)
 };
+let hoverTimeout = null;
 
 // --- Helpers ---
 function getNoteName(midi, useFlats) {
@@ -337,12 +338,16 @@ function renderChordSelector() {
 
             // Hover Effects
             btn.onmouseenter = () => {
-                state.hoveredChord = { root: noteName, type: rowType };
-                update();
+                if (hoverTimeout) clearTimeout(hoverTimeout);
+                hoverTimeout = setTimeout(() => {
+                    state.hoveredChord = { root: noteName, type: rowType };
+                    update(100); // Fast transition for hover
+                }, 30);
             };
             btn.onmouseleave = () => {
+                if (hoverTimeout) clearTimeout(hoverTimeout);
                 state.hoveredChord = null;
-                update();
+                update(100);
             };
             col.appendChild(btn);
         });
@@ -454,12 +459,13 @@ function generateData() {
     };
 }
 
-function update() {
+function update(transitionDuration = 500) {
     const data = generateData();
+    data.transition_duration = transitionDuration;
     
     // Render D3
-    if (window.dash_clientside && window.dash_clientside.clientside.render_fretboard) {
-        window.dash_clientside.clientside.render_fretboard(data);
+    if (window.FretboardApp && window.FretboardApp.render) {
+        window.FretboardApp.render(data);
     }
 }
 
