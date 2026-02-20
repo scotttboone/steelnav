@@ -13,7 +13,7 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             const showFreq = data.show_freq || false;
 
             // --- Colors ---
-            const theme = { bg: '#fff', cell: '#fff', cellHigh: '#f0f0f0', stroke: '#ddd', text: '#000', markerBg: '#000', markerText: '#fff', noteOut: '#eeeeee', noteScale: '#a5d6a7', noteRoot: '#42a5f5', noteTextOut: '#ccc', noteTextIn: '#000', noteTextRoot: '#fff', groupStroke: '#000' };
+            const theme = { bg: '#fff', cell: '#fff', cellHigh: '#f0f0f0', stroke: '#ddd', text: '#000', markerBg: '#000', markerText: '#fff', noteOut: '#b2b2b2', noteScale: '#a5d6a7', noteRoot: '#42a5f5', noteTextOut: '#555', noteTextIn: '#000', noteTextRoot: '#fff', groupStroke: '#000' };
             
             // --- Configuration ---
             const cellSize = 40; // Fixed square size in pixels
@@ -255,7 +255,7 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             const textColors = [theme.noteTextOut, theme.noteTextIn, theme.noteTextRoot];
             
             const chordSelected = notes.some(n => n.is_chord);
-            const lighterColors = colors.map(c => d3.interpolateRgb(c, "#fff")(0.33));
+            const lighterColors = colors.map(c => d3.interpolateRgb(c, "#fff")(0.25));
             // Ensure 'Out' notes (index 0) don't get lighter, only scale/root tones
             lighterColors[0] = colors[0];
 
@@ -282,7 +282,7 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             });
             
             allNotes.select('text')
-                .attr('fill', d => textColors[d.cat])
+                .attr('fill', d => (d.cat === 0 && d.is_chord) ? '#000' : textColors[d.cat])
                 .style('font-weight', d => d.is_chord ? 'bold' : 'normal');
 
             return "rendered";
