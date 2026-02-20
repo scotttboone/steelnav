@@ -184,18 +184,23 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             // Helper to generate path for highlight segments
             const getHighlightPath = (pos) => {
                 const r = 4; // Corner radius
-                const l = 2, t = 2, r_edge = cellSize - 2, b = cellSize - 2;
+                // Use full cell dimensions for filled background (creates ~2px border around note)
+                const l = 0, t = 0, r_edge = cellSize, b = cellSize;
                 const cellT = 0, cellB = cellSize;
                 
                 if (!pos) return '';
+                
+                // Closed shapes for filling
                 if (pos === 'single') return `M ${l},${t+r} Q ${l},${t} ${l+r},${t} H ${r_edge-r} Q ${r_edge},${t} ${r_edge},${t+r} V ${b-r} Q ${r_edge},${b} ${r_edge-r},${b} H ${l+r} Q ${l},${b} ${l},${b-r} Z`;
                 
-                // Start (Top): Open bottom
-                if (pos === 'start') return `M ${l},${cellB} V ${t+r} Q ${l},${t} ${l+r},${t} H ${r_edge-r} Q ${r_edge},${t} ${r_edge},${t+r} V ${cellB}`;
-                // Mid: Open top and bottom (vertical lines)
-                if (pos === 'mid') return `M ${l},${cellB} V ${cellT} M ${r_edge},${cellT} V ${cellB}`;
-                // End (Bottom): Open top
-                if (pos === 'end') return `M ${l},${cellT} V ${b-r} Q ${l},${b} ${l+r},${b} H ${r_edge-r} Q ${r_edge},${b} ${r_edge},${b-r} V ${cellT}`;
+                // Start (Top): Rounded top, flat bottom
+                if (pos === 'start') return `M ${l},${cellB} V ${t+r} Q ${l},${t} ${l+r},${t} H ${r_edge-r} Q ${r_edge},${t} ${r_edge},${t+r} V ${cellB} Z`;
+                
+                // Mid: Flat top and bottom
+                if (pos === 'mid') return `M ${l},${cellB} V ${cellT} H ${r_edge} V ${cellB} Z`;
+                
+                // End (Bottom): Flat top, rounded bottom
+                if (pos === 'end') return `M ${l},${cellT} V ${b-r} Q ${l},${b} ${l+r},${b} H ${r_edge-r} Q ${r_edge},${b} ${r_edge},${b-r} V ${cellT} Z`;
             };
 
             // --- Notes Rendering ---
@@ -218,18 +223,17 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
                 .attr('opacity', 0)
                 .attr('transform', d => `translate(${x(d.fret)}, ${y(d.string)})`);
 
+            // Add Highlight Path (Behind the rect)
+            enter.append('path')
+                .attr('class', 'chord-highlight')
+                .attr('fill', theme.groupStroke)
+                .attr('stroke', 'none');
+
             enter.append('rect')
                 .attr('width', cellSize - 4)
                 .attr('height', cellSize - 4)
                 .attr('x', 2).attr('y', 2)
                 .attr('rx', 4); // Rounded corners
-
-            // Add Highlight Path (On top of the rect)
-            enter.append('path')
-                .attr('class', 'chord-highlight')
-                .attr('fill', 'none')
-                .attr('stroke', theme.groupStroke)
-                .attr('stroke-width', 3.75);
 
             enter.append('text')
                 .attr('x', cellSize / 2)
@@ -249,10 +253,15 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
             // Update Colors and Text
             const colors = [theme.noteOut, theme.noteScale, theme.noteRoot]; // Out, Scale, Root
             const textColors = [theme.noteTextOut, theme.noteTextIn, theme.noteTextRoot];
+            
+            const chordSelected = notes.some(n => n.is_chord);
+            const lighterColors = colors.map(c => d3.interpolateRgb(c, "#fff")(0.33));
+            // Ensure 'Out' notes (index 0) don't get lighter, only scale/root tones
+            lighterColors[0] = colors[0];
 
             allNotes.select('rect')
                 .transition(t)
-                .attr('fill', d => colors[d.cat])
+                .attr('fill', d => (chordSelected && !d.is_chord) ? lighterColors[d.cat] : colors[d.cat])
                 .attr('stroke', d => d.cat > 0 ? '#333' : 'none') 
                 .attr('stroke-width', 1);
 
