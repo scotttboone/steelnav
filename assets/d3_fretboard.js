@@ -218,18 +218,18 @@ window.dash_clientside.clientside.render_fretboard = function(data) {
                 .attr('opacity', 0)
                 .attr('transform', d => `translate(${x(d.fret)}, ${y(d.string)})`);
 
-            // Add Highlight Path (Behind the rect)
-            enter.append('path')
-                .attr('class', 'chord-highlight')
-                .attr('fill', 'none')
-                .attr('stroke', theme.groupStroke)
-                .attr('stroke-width', 3);
-
             enter.append('rect')
                 .attr('width', cellSize - 4)
                 .attr('height', cellSize - 4)
                 .attr('x', 2).attr('y', 2)
                 .attr('rx', 4); // Rounded corners
+
+            // Add Highlight Path (On top of the rect)
+            enter.append('path')
+                .attr('class', 'chord-highlight')
+                .attr('fill', 'none')
+                .attr('stroke', theme.groupStroke)
+                .attr('stroke-width', 3.75);
 
             enter.append('text')
                 .attr('x', cellSize / 2)
