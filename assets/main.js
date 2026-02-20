@@ -220,22 +220,17 @@ function createControlBtn(label, id) {
     btn.onclick = () => {
         if (state.activeModifiers.has(id)) {
             state.activeModifiers.delete(id);
-            btn.classList.remove('active');
         } else {
             // Mutual Exclusion for RR1/RR2
             if (id === 'RR1' && state.activeModifiers.has('RR2')) {
                 state.activeModifiers.delete('RR2');
-                const other = document.querySelector('button[data-id="RR2"]');
-                if (other) other.classList.remove('active');
             }
             if (id === 'RR2' && state.activeModifiers.has('RR1')) {
                 state.activeModifiers.delete('RR1');
-                const other = document.querySelector('button[data-id="RR1"]');
-                if (other) other.classList.remove('active');
             }
             state.activeModifiers.add(id);
-            btn.classList.add('active');
         }
+        renderPedalControls();
         update();
     };
     return btn;
