@@ -77,17 +77,19 @@ function App() {
         {/* Levers */}
         <div className="levers-row">
           {Object.entries(leversByGroup).map(([group, levers]) => (
-            <div key={group} className="lever-group">
+            <fieldset key={group} className="lever-group">
+              <legend>{group}</legend>
               {levers.map(l => (
                 <button
                   key={l.id}
                   className={`control-btn ${activeModifiers.includes(l.id) ? 'active' : ''}`}
                   onClick={() => toggleModifier(l.id)}
+                  title={`Changes: ${JSON.stringify(l.changes).replace(/[{"}]/g, '').replace(/,/g, ', ')}`}
                 >
                   {l.label}
                 </button>
               ))}
-            </div>
+            </fieldset>
           ))}
         </div>
 
@@ -130,6 +132,15 @@ function App() {
             );
           })}
         </div>
+
+        {/* Reset Button */}
+        {activeModifiers.length > 0 && (
+          <div style={{ marginTop: '15px' }}>
+            <button className="reset-btn" onClick={() => setActiveModifiers([])}>
+              Reset Pedals
+            </button>
+          </div>
+        )}
       </div>
     );
   };

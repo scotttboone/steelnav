@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import styles from './Fretboard.module.css';
 import { midiToNoteName, getFrequency } from '../utils';
+import { INTERVAL_NAMES } from '../constants';
 
 const Fretboard = ({
   tuning,
@@ -55,6 +56,9 @@ const Fretboard = ({
           // Chord overrides scale color if present
           const isChordTone = chordIndices && chordIndices.has(noteIdx);
 
+          // Calculate interval name relative to root
+          const intervalName = INTERVAL_NAMES[(noteIdx - rootIndex + 12) % 12];
+
           data.push({
             string: s,
             fret,
@@ -62,7 +66,8 @@ const Fretboard = ({
             noteName: midiToNoteName(pitch, useFlats),
             freq: getFrequency(pitch).toFixed(1),
             category,
-            isChordTone
+            isChordTone,
+            intervalName
           });
         }
       }
@@ -107,6 +112,7 @@ const Fretboard = ({
               x2={width - config.fretWidth/2}
               y2={config.topMargin + i * config.stringHeight}
               className={styles.stringLine}
+              strokeWidth={1 + (i * 0.3)} /* Visual gauge: thicker for lower strings */
             />
           ))}
 
@@ -136,6 +142,7 @@ const Fretboard = ({
 
             return (
               <g key={`n-${n.string}-${n.fret}`} className={styles.noteGroup}>
+                <title>{`${n.noteName} - ${n.intervalName} (${n.freq} Hz)`}</title>
                 <circle cx={cx} cy={cy} r={config.circleRadius} className={circleClass} />
                 <text x={cx} y={cy} dy=".3em" textAnchor="middle" className={textClass}>
                   {n.noteName}
