@@ -2,6 +2,7 @@ window.FretboardApp = window.FretboardApp || {};
 window.FretboardApp.render = function(data) {
             if (!data) { console.error("FretboardApp: No data provided"); return; }
             if (typeof d3 === 'undefined') { console.error("D3.js is not loaded."); return; }
+            console.log("FretboardApp: Rendering with data", data);
 
             const containerId = '#fretboard-container';
             const notes = data.notes;
@@ -286,6 +287,14 @@ window.FretboardApp.render = function(data) {
                 if (showFreq) {
                     el.append('tspan').text(d.freq).attr('x', cellSize/2).attr('dy', '1.2em').attr('font-size', '9px');
                 }
+            });
+            
+            allNotes.select('text')
+                .attr('fill', d => (d.cat === 0 && d.is_chord) ? '#000' : textColors[d.cat])
+                .style('font-weight', d => d.is_chord ? 'bold' : 'normal');
+
+            return "rendered";
+        };      }
             });
             
             allNotes.select('text')

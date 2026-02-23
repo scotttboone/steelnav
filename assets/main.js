@@ -477,6 +477,7 @@ function generateData() {
 
 function update(transitionDuration = 500) {
     try {
+        console.log("Update triggered. Generating data...");
         const data = generateData();
         data.transition_duration = transitionDuration;
         
@@ -487,6 +488,7 @@ function update(transitionDuration = 500) {
 
         // Render D3
         if (window.FretboardApp && window.FretboardApp.render) {
+            console.log("Calling FretboardApp.render...");
             window.FretboardApp.render(data);
         } else {
             console.error("FretboardApp.render is not defined. Ensure d3_fretboard.js is loaded.");
@@ -574,8 +576,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tuningModal.style.display = "block";
             const currentTuning = document.getElementById('tuning-select').value;
             const data = COPEDENT_LIBRARY[currentTuning];
-            if (window.jsyaml) {
-                document.getElementById("custom-tuning-input").value = jsyaml.dump(data);
+            if (window.jsyaml && window.jsyaml.dump) {
+                document.getElementById("custom-tuning-input").value = window.jsyaml.dump(data);
             } else {
                 document.getElementById("custom-tuning-input").value = "Error: js-yaml library not loaded.";
             }
@@ -590,8 +592,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (applyTuningBtn) {
         applyTuningBtn.onclick = () => {
             try {
+                if (!window.jsyaml || !window.jsyaml.load) {
+                    throw new Error("js-yaml library is not loaded. Cannot parse input.");
+                }
+
                 const input = document.getElementById("custom-tuning-input").value;
-                const parsed = jsyaml.load(input);
+                const parsed = window.jsyaml.load(input);
                 
                 if (!parsed || !parsed.num_strings || !parsed.tuning) {
                     throw new Error("Invalid tuning definition. Must contain 'num_strings' and 'tuning'.");
@@ -637,8 +643,8 @@ document.addEventListener('DOMContentLoaded', () => {
             scaleModal.style.display = "block";
             const currentScale = document.getElementById('mode-select').value;
             const data = SCALES[currentScale];
-            if (window.jsyaml) {
-                document.getElementById("custom-scale-input").value = jsyaml.dump(data);
+            if (window.jsyaml && window.jsyaml.dump) {
+                document.getElementById("custom-scale-input").value = window.jsyaml.dump(data);
             } else {
                 document.getElementById("custom-scale-input").value = "Error: js-yaml library not loaded.";
             }
@@ -653,8 +659,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (applyScaleBtn) {
         applyScaleBtn.onclick = () => {
             try {
+                if (!window.jsyaml || !window.jsyaml.load) {
+                    throw new Error("js-yaml library is not loaded. Cannot parse input.");
+                }
+
                 const input = document.getElementById("custom-scale-input").value;
-                const parsed = jsyaml.load(input);
+                const parsed = window.jsyaml.load(input);
 
                 if (!Array.isArray(parsed) || !parsed.every(Number.isInteger)) {
                     throw new Error("Invalid scale definition. Must be a list of integers (e.g., [0, 2, 4...]).");
