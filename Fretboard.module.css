@@ -1,0 +1,58 @@
+.container {
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.scrollWrapper {
+  display: inline-block;
+  min-width: 100%;
+}
+
+/* Day Mode */
+.day { background-color: #ffffff; }
+.day .fretLine { stroke: #ccc; stroke-width: 1; }
+.day .nut { stroke: #333; stroke-width: 4; }
+.day .stringLine { stroke: #999; stroke-width: 2; }
+.day .fretLabel { fill: #333; font-size: 12px; }
+.day .noteText { fill: #fff; font-size: 10px; font-family: sans-serif; pointer-events: none; }
+.day .freqText { fill: #666; font-size: 8px; }
+
+/* Night Mode */
+.night { background-color: #1e1e1e; }
+.night .fretLine { stroke: #444; stroke-width: 1; }
+.night .nut { stroke: #888; stroke-width: 4; }
+.night .stringLine { stroke: #555; stroke-width: 2; }
+.night .fretLabel { fill: #ccc; font-size: 12px; }
+.night .noteText { fill: #000; font-size: 10px; font-family: sans-serif; pointer-events: none; }
+.night .freqText { fill: #aaa; font-size: 8px; }
+
+/* Note Circles */
+.noteCircle {
+  stroke: none;
+  transition: fill 0.2s;
+}
+
+.rootNote {
+  fill: #d32f2f; /* Red */
+}
+
+.scaleNote {
+  fill: #1976d2; /* Blue */
+}
+
+.chordNote {
+  fill: #388e3c; /* Green */
+}
+
+/* Specific overrides for Night Mode colors if needed */
+.night .scaleNote { fill: #64b5f6; }
+.night .chordNote { fill: #81c784; }
+.night .rootNote { fill: #e57373; }
+
+.noteGroup:hover circle {
+  stroke: #000;
+  stroke-width: 2px;
+  cursor: pointer;
+}
