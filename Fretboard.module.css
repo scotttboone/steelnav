@@ -46,6 +46,16 @@
   fill: #388e3c; /* Green */
 }
 
+/* Out of Scale Chord Notes */
+.chordNoteOut {
+  fill: #606060; /* Darkened Grey */
+}
+
+.day .textOut,
+.night .textOut {
+  fill: #cccccc; /* 80% Grey */
+}
+
 /* Specific overrides for Night Mode colors if needed */
 .night .scaleNote { fill: #64b5f6; }
 .night .chordNote { fill: #81c784; }

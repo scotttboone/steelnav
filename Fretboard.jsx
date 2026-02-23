@@ -119,14 +119,25 @@ const Fretboard = ({
             const cy = config.topMargin + (n.string - 1) * config.stringHeight;
             
             let circleClass = styles.noteCircle;
-            if (n.category === 'root') circleClass = styles.rootNote;
-            else if (n.isChordTone) circleClass = styles.chordNote;
-            else if (n.category === 'scale') circleClass = styles.scaleNote;
+            let textClass = styles.noteText;
+
+            if (n.category === 'root') {
+              circleClass = styles.rootNote;
+            } else if (n.isChordTone) {
+              if (n.category === 'out') {
+                circleClass = styles.chordNoteOut;
+                textClass = `${styles.noteText} ${styles.textOut}`;
+              } else {
+                circleClass = styles.chordNote;
+              }
+            } else if (n.category === 'scale') {
+              circleClass = styles.scaleNote;
+            }
 
             return (
               <g key={`n-${n.string}-${n.fret}`} className={styles.noteGroup}>
                 <circle cx={cx} cy={cy} r={config.circleRadius} className={circleClass} />
-                <text x={cx} y={cy} dy=".3em" textAnchor="middle" className={styles.noteText}>
+                <text x={cx} y={cy} dy=".3em" textAnchor="middle" className={textClass}>
                   {n.noteName}
                 </text>
                 {showFreq && <text x={cx} y={cy + 20} textAnchor="middle" className={styles.freqText}>{n.freq}</text>}
