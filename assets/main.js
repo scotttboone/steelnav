@@ -15,7 +15,6 @@ const SCALES = {
     "Locrian": [0, 1, 3, 5, 6, 8, 10],
     "Major Pentatonic": [0, 2, 4, 7, 9],
     "Minor Pentatonic": [0, 3, 5, 7, 10],
-    "Mixolydian": [0, 2, 4, 5, 7, 9, 10],
     "Chromatic": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 };
 
@@ -372,14 +371,31 @@ function calculateTuning(copedent) {
 }
 
 function generateData() {
-    const tuningName = document.getElementById('tuning-select').value;
-    const copedent = COPEDENT_LIBRARY[tuningName];
+    let tuningName = document.getElementById('tuning-select').value;
+    let copedent = COPEDENT_LIBRARY[tuningName];
+
+    // Fallback if tuning not found (e.g. stale browser state)
+    if (!copedent) {
+        console.warn(`Tuning "${tuningName}" not found. Resetting to default.`);
+        tuningName = Object.keys(COPEDENT_LIBRARY)[0];
+        document.getElementById('tuning-select').value = tuningName;
+        copedent = COPEDENT_LIBRARY[tuningName];
+    }
+
     const currentTuning = calculateTuning(copedent);
     
     const rootVal = document.getElementById('root-select').value;
     const rootIndex = parseInt(rootVal);
-    const scaleName = document.getElementById('mode-select').value;
-    const scaleIntervals = SCALES[scaleName];
+    let scaleName = document.getElementById('mode-select').value;
+    let scaleIntervals = SCALES[scaleName];
+
+    // Fallback for scale if not found (e.g. stale browser state from "User-defined")
+    if (!scaleIntervals) {
+        console.warn(`Scale "${scaleName}" not found. Resetting to default.`);
+        scaleName = Object.keys(SCALES)[0]; // e.g., "Ionian (Major)"
+        document.getElementById('mode-select').value = scaleName;
+        scaleIntervals = SCALES[scaleName];
+    }
     
     const maxFret = parseInt(document.getElementById('max-fret').value) || 15;
     const showMarkers = true;
@@ -460,14 +476,23 @@ function generateData() {
 }
 
 function update(transitionDuration = 500) {
-    const data = generateData();
-    data.transition_duration = transitionDuration;
-    
-    // Render D3
-    if (window.FretboardApp && window.FretboardApp.render) {
-        window.FretboardApp.render(data);
-    } else {
-        console.error("FretboardApp.render is not defined. Ensure d3_fretboard.js is loaded.");
+    try {
+        const data = generateData();
+        data.transition_duration = transitionDuration;
+        
+        if (typeof d3 === 'undefined') {
+            console.error("D3.js is not loaded. Cannot render fretboard.");
+            return;
+        }
+
+        // Render D3
+        if (window.FretboardApp && window.FretboardApp.render) {
+            window.FretboardApp.render(data);
+        } else {
+            console.error("FretboardApp.render is not defined. Ensure d3_fretboard.js is loaded.");
+        }
+    } catch (e) {
+        console.error("Error updating fretboard:", e);
     }
 }
 
@@ -506,6 +531,11 @@ document.addEventListener('DOMContentLoaded', () => {
         opt.text = k;
         tuningSelect.appendChild(opt);
     });
+
+    // Ensure valid selection (fix for stale browser state)
+    if (!COPEDENT_LIBRARY[tuningSelect.value]) {
+        tuningSelect.value = Object.keys(COPEDENT_LIBRARY)[0];
+    }
 
     const modeSelect = document.getElementById('mode-select');
     Object.keys(SCALES).forEach(k => {

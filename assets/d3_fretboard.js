@@ -1,6 +1,6 @@
 window.FretboardApp = window.FretboardApp || {};
 window.FretboardApp.render = function(data) {
-            if (!data) return;
+            if (!data) { console.error("FretboardApp: No data provided"); return; }
             if (typeof d3 === 'undefined') { console.error("D3.js is not loaded."); return; }
 
             const containerId = '#fretboard-container';
